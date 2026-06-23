@@ -62,7 +62,7 @@ def main():
         return 1
 
     print("Kurulum tamamlandi.")
-    print("Simdi calistirin: python3 sistem_kontrol.py")
+    print("Simdi calistirin: python3 par_asistan.py")
     return 0
 
 

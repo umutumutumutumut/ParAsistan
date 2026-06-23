@@ -134,8 +134,8 @@ def sistem_kontrol():
     clear_screen()
 
     figlet = Figlet(font="slant")
-    print(Fore.BLUE + figlet.renderText("Sistem"))
-    print(Fore.WHITE + Style.BRIGHT + "Pardus Terminal Sistem Kontrolu")
+    print(Fore.BLUE + figlet.renderText("ParAsistan"))
+    print(Fore.WHITE + Style.BRIGHT + "Pardus Terminal ParAsistan")
     print(Style.DIM + time.strftime("%d.%m.%Y %H:%M:%S"))
     print()
 
