@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import os
+import platform
 import shutil
+import subprocess
 import time
 from pathlib import Path
 
@@ -74,6 +76,64 @@ def disk_status(path="/"):
     return usage.total, usage.used, percent
 
 
+def os_version():
+    os_release = Path("/etc/os-release")
+    if os_release.exists():
+        values = {}
+        with open(os_release, "r", encoding="utf-8") as release_file:
+            for line in release_file:
+                if "=" not in line:
+                    continue
+                key, value = line.strip().split("=", 1)
+                values[key] = value.strip('"')
+
+        return values.get("PRETTY_NAME") or values.get("NAME")
+
+    mac_version = platform.mac_ver()[0]
+    if mac_version:
+        return f"macOS {mac_version}"
+
+    return platform.platform()
+
+
+def cpu_model():
+    cpuinfo = Path("/proc/cpuinfo")
+    if cpuinfo.exists():
+        with open(cpuinfo, "r", encoding="utf-8") as cpuinfo_file:
+            for line in cpuinfo_file:
+                if line.lower().startswith("model name"):
+                    return line.split(":", 1)[1].strip()
+
+    try:
+        result = subprocess.run(
+            ["sysctl", "-n", "machdep.cpu.brand_string"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        model = result.stdout.strip()
+        if model:
+            return model
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+
+    processor = platform.processor()
+    if processor and processor.lower() not in ("i386", "unknown"):
+        return processor
+
+    return platform.machine() or "bilgi alinamadi"
+
+
+def system_info():
+    cpu_count = os.cpu_count() or 1
+    return {
+        "SISTEM": os_version() or "bilgi alinamadi",
+        "MAKINE": platform.machine() or "bilgi alinamadi",
+        "ISLEMCI": cpu_model(),
+        "CEKIRDEK": f"{cpu_count} cekirdek",
+    }
+
+
 def temperature_status():
     names = ("x86_pkg_temp", "coretemp", "k10temp", "acpitz", "thermal_zone")
     candidates = []
@@ -125,25 +185,37 @@ def row(label, value, percent=None):
     return f"{Fore.CYAN}{label:<10}{Style.RESET_ALL} {bar} {percent_text}  {value}"
 
 
+def info_row(label, value):
+    return f"{Fore.CYAN}{label:<10}{Style.RESET_ALL} {Fore.WHITE}{value}{Style.RESET_ALL}"
+
+
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def sistem_kontrol():
+def sistem_kontrol(baslik_goster=True, ekran_temizle=True):
     init(autoreset=True)
-    clear_screen()
+    if ekran_temizle:
+        clear_screen()
 
-    figlet = Figlet(font="slant")
-    print(Fore.BLUE + figlet.renderText("ParAsistan"))
-    print(Fore.WHITE + Style.BRIGHT + "Pardus Terminal ParAsistan")
-    print(Style.DIM + time.strftime("%d.%m.%Y %H:%M:%S"))
-    print()
+    if baslik_goster:
+        figlet = Figlet(font="slant")
+        print(Fore.BLUE + figlet.renderText("ParAsistan"))
+        print(Fore.WHITE + Style.BRIGHT + "Pardus Terminal ParAsistan")
+        print(Style.DIM + time.strftime("%d.%m.%Y %H:%M:%S"))
+        print()
 
     cpu_percent = cpu_usage_percent()
     ram = ram_status()
     disk_total, disk_used, disk_percent = disk_status("/")
     temperature = temperature_status()
 
+    print(Fore.CYAN + Style.BRIGHT + "Bilgisayar Bilgileri")
+    for label, value in system_info().items():
+        print(info_row(label, value))
+    print()
+
+    print(Fore.CYAN + Style.BRIGHT + "Durum")
     print(row("CPU", "islemci kullanimi" if cpu_percent is not None else "bilgi alinamadi", cpu_percent))
     if ram is None:
         print(row("RAM", "bilgi alinamadi"))
