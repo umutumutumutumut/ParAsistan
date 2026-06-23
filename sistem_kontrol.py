@@ -4,12 +4,8 @@ import shutil
 import time
 from pathlib import Path
 
-
 from colorama import Fore, Style, init
 from pyfiglet import Figlet
-
-
-init(autoreset=True)
 
 
 def format_bytes(value):
@@ -133,7 +129,8 @@ def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def main():
+def sistem_kontrol():
+    init(autoreset=True)
     clear_screen()
 
     figlet = Figlet(font="slant")
@@ -163,6 +160,10 @@ def main():
 
     print()
     print(Style.DIM + "Tekrar gormek icin komutu yeniden calistirin.")
+
+
+def main():
+    sistem_kontrol()
 
 
 if __name__ == "__main__":
